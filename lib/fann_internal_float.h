@@ -1,0 +1,75 @@
+#define fann_bp_max(x,y) (((x) > (y)) ? (x) : (y))
+#define fann_ff_max(x,y) fann_bp_max((x),(y))
+#define fann_bp_min(x,y) (((x) < (y)) ? (x) : (y))
+#define fann_ff_min(x,y) fann_bp_min((x),(y)) 
+#define fann_bp_mul(x,y) ((x)*(y))
+#define fann_ff_mul(x,y) fann_bp_mul((x),(y)) 
+//#define fann_bp_div(x,y) ((x)/(y))
+#define fann_ff_div(x,y) ((x)/(y))
+#define fann_bp_add(x,y) ((x)+(y))
+#define fann_ff_add(x,y) fann_bp_add((x),(y))
+#define fann_bp_sub(x,y) ((x)-(y))
+#define fann_ff_sub(x,y) fann_bp_sub((x),(y)) 
+#define fann_bp_mac(x,y,c) (((x)*(y))+(c))
+#define fann_ff_mac(x,y,c) fann_bp_mac((x),(y),(c))
+
+#define fann_int_to_bp(i) ((fann_type_bp)(i))
+#define fann_int_to_ff(i) ((fann_type_ff)(i))
+#define fann_float_to_bp(fp) ((fann_type_bp)(fp))
+#define fann_float_to_ff(fp) ((fann_type_ff)(fp))
+//#define fann_bp_to_int(w) ((int)(w))
+//#define fann_ff_to_int(w) ((int)(w))
+
+#define fann_bp_to_float(w) ((float)(w))
+#define fann_ff_to_float(w) ((float)(w))
+
+#ifdef DOUBLEFANN
+#define fann_ff_to_bp(n) ((double)(n))
+#define fann_bp_to_ff(a) ((double)(a))
+#define fann_bp_to_bp(a, s) ((double)(a))
+#elif defined FLOATFANN
+#define fann_ff_to_bp(n) ((float)(n))
+#define fann_bp_to_ff(a) ((float)(a))
+#define fann_bp_to_bp(a, s) ((float)(a))
+#else
+#error "NOT FLOAT NOR DOUBLE"
+#endif
+
+#define fann_bp_abs(w) (fann_abs(w))
+#define fann_ff_abs(w) (fann_abs(w))
+#define fann_bp_neg(w) (-(w))
+#define fann_ff_neg(w) (-(w))
+#define fann_ff_clip(x,y,z) fann_clip((x),(y),(z))
+#define fann_bp_clip(x,y,z) fann_clip((x),(y),(z))
+#define fann_bp_lt(x,y) ((x)<(y))
+#define fann_ff_lt(x,y) ((x)<(y))
+#define fann_bp_ne(x,y) ((x)!=(y))
+#define fann_ff_ne(x,y) ((x)!=(y))
+#define fann_bp_gt(x,y) ((x)>(y))
+#define fann_ff_gt(x,y) ((x)>(y)) 
+#define fann_bp_is_neg(x) ((x)<0.0)
+#define fann_ff_is_neg(x) ((x)<0.0)
+#define fann_bp_is_pos(x) ((x)>0.0)
+#define fann_ff_is_pos(x) ((x)>0.0)
+#define fann_bp_is_non_zero(x) ((x)!=0.0)
+#define fann_ff_is_non_zero(x) ((x)!=0.0)
+#define fann_bp_is_zero(x) ((x)==0.0)
+#define fann_ff_is_zero(x) ((x)==0.0)
+
+// native type for temporary calculations:
+#define NT_0000                     0.0
+#define fann_float_to_nt(x)         ((x))
+#define fann_nt_to_float(x)         ((x))
+#define fann_ff_to_nt(x)            fann_ff_to_float((x))
+#define fann_nt_to_ff(x)            fann_float_to_ff((x))
+#define fann_nt_is_zero(x)          ((x)==0.0)
+#define fann_nt_neg(x)              (-(x))
+#define fann_nt_gt(x, y)            ((x) > (y))
+#define fann_nt_lt(x, y)            ((x) < (y))
+#define fann_nt_add(x, y)           ((x) + (y))
+#define fann_nt_sub(x, y)           ((x) - (y))
+#define fann_nt_mul(x, y)           ((x) * (y))
+#define fann_nt_div(x, y)           ((x) / (y))
+#define fann_nt_mac(x, y, c)        ((x) * (y) + (c))
+
+
