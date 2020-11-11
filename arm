@@ -1,0 +1,9 @@
+make clean
+cd lib
+make depclean
+make pidep
+make pi
+cd ../examples
+make pi
+cd ..
+

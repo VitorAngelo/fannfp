@@ -1,0 +1,4 @@
+find . -type f -name \*.c -o -type f -name \*.h > cscope.files
+ctags `cat cscope.files`
+cscope -RbqU
+
