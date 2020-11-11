@@ -50,12 +50,100 @@ const char * fann_float_type = "SOFT-HWF16";
 #include "fann_ap_f16.c" // not for arith. operations
 #elif defined ARMF16
 const char * fann_float_type = "SOFT-ARMF16";
+#elif defined POSIT16
+const char * fann_float_type = "SOFT-POSIT16";
+#include "softposit.c"
 #else
 #error "Choose floating point type"
 #endif
 
 #include <math.h>
 
+unsigned int fann_ff_fpu_limits(double *min_neg, double *max_neg, double *min_pos, double *max_pos)
+{
+#ifdef SWF32_IEEE
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined HWF16
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined ARMF16
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined SWF16
+    fann_type_ff ff;
+    ff.u = 0x0001;
+    *min_pos = fann_ff_to_float(ff);
+#ifdef SWF16_AP
+    ff.u = 0x7FFF;
+    *max_pos = fann_ff_to_float(ff);
+    ff.u = 0xFFFF;
+    *min_neg = fann_ff_to_float(ff);
+#else // SWF16_IEEE
+    ff.u = 0x7BFF;
+    *max_pos = fann_ff_to_float(ff);
+    ff.u = 0xFBFF;
+    *min_neg = fann_ff_to_float(ff);
+#endif
+    ff.u = 0x8001;
+    *max_neg = fann_ff_to_float(ff);
+    return 16;
+#elif defined POSIT16
+    fann_type_ff ff;
+    ff.v = 0x0001;
+    *min_pos = fann_ff_to_float(ff);
+    ff.v = 0x7FFF;
+    *max_pos = fann_ff_to_float(ff);
+    ff.v = 0x8001;
+    *min_neg = fann_ff_to_float(ff);
+    ff.v = 0xFFFF;
+    *max_neg = fann_ff_to_float(ff);
+    return 16;
+#else
+#error "Choose floating point type"
+#endif
+    return 0;
+}
+
+unsigned int fann_bp_fpu_limits(double *min_neg, double *max_neg, double *min_pos, double *max_pos)
+{
+#ifdef SWF32_IEEE
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined HWF16
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined ARMF16
+    *min_neg = *max_neg = *min_pos = *max_pos = 0.0;
+#elif defined SWF16
+    fann_type_bp bp;
+    bp.u = 0x0001;
+    *min_pos = fann_bp_to_float(bp);
+#ifdef SWF16_AP
+    bp.u = 0x7FFF;
+    *max_pos = fann_bp_to_float(bp);
+    bp.u = 0xFFFF;
+    *min_neg = fann_bp_to_float(bp);
+#else // SWF16_IEEE
+    bp.u = 0x7BFF;
+    *max_pos = fann_bp_to_float(bp);
+    bp.u = 0xFBFF;
+    *min_neg = fann_bp_to_float(bp);
+#endif
+    bp.u = 0x8001;
+    *max_neg = fann_bp_to_float(bp);
+    return 16;
+#elif defined POSIT16
+    fann_type_bp bp;
+    bp.v = 0x0001;
+    *min_pos = fann_bp_to_float(bp);
+    bp.v = 0x7FFF;
+    *max_pos = fann_bp_to_float(bp);
+    bp.v = 0x8001;
+    *min_neg = fann_bp_to_float(bp);
+    bp.v = 0xFFFF;
+    *max_neg = fann_bp_to_float(bp);
+    return 16;
+#else
+#error "Choose floating point type"
+#endif
+    return 0;
+}
 #ifndef FANN_INFERENCE_ONLY
 unsigned long int fann_mac_ops_count;
 unsigned long int fann_add_ops_count;
@@ -167,6 +255,7 @@ fann_type_ff fann_bp_to_ff(fann_type_bp bp)
 }
 
 #ifndef SWF16_IEEE
+#ifndef POSIT16 
 fann_type_bp fann_bp_to_bp(fann_type_bp src, int_fast8_t src_bias)
 {
 #if (defined SWF16_AP) || (defined HWF16)
@@ -202,6 +291,7 @@ fann_type_bp fann_bp_to_bp(fann_type_bp src, int_fast8_t src_bias)
     return src;
 #endif
 }
+#endif // POSIT16 
 #endif // SWF16_IEEE
 
 // APPROX FUNCTIONS
@@ -223,6 +313,8 @@ fann_type_bp fann_int_to_bp(int i)//, int_fast8_t bias)
     //return ret;
 #elif defined SWF16_IEEE
     return i32_to_f16(i);
+#elif defined POSIT16
+    return i32_to_p16(i);
 #else // ARMF16
     fann_type_bp ret;
     ret.f = (__fp16) i;
@@ -251,6 +343,8 @@ fann_type_ff fann_int_to_ff(int i)
 #endif
 #elif defined SWF16_IEEE
     return i32_to_f16(i);
+#elif defined POSIT16
+    return i32_to_p16(i);
 #else // ARMF16
     fann_type_ff ret;
     ret.f = (__fp16) i;
@@ -269,6 +363,8 @@ fann_type_bp fann_float_to_bp(float f)//, int_fast8_t bias)
     float hwf; } un;
     un.hwf = (float)f;
     return un.swf;
+#elif defined POSIT16
+    return convertDoubleToP16(f);
 #elif defined SWF16 
     float32_t swf;
     swf.f = (float)f;
@@ -300,6 +396,8 @@ inline fann_type_ff fann_float_to_ff(float f)
     float hwf; } un;
     un.hwf = (float)f;
     return un.swf;
+#elif defined POSIT16
+    return convertDoubleToP16(f);
 #elif defined SWF16 
     float32_t swf;
     swf.f = (float)f;
@@ -382,6 +480,8 @@ inline float fann_bp_to_float(fann_type_bp f)//, int_fast8_t bias)
     float32_t swf;
     swf = f16_to_f32(f);
     return (float)swf.f;
+#elif defined POSIT16
+    return convertP16ToDouble(f);
 #else  // ARMF16
     return (float)(f.f);
 #endif
@@ -401,6 +501,8 @@ inline float fann_ff_to_float(fann_type_ff f)
     float32_t swf;
     swf = f16_to_f32(f);
     return (float)swf.f;
+#elif defined POSIT16
+    return convertP16ToDouble(f);
 #else  // ARMF16
     return (float)(f.f);
 #endif
@@ -416,6 +518,9 @@ fann_type_bp fann_bp_neg(fann_type_bp f)
     f.u ^= 0x80000000;
 #elif defined SWF16
     f.u ^= 0x8000;
+#elif defined POSIT16
+    if (f.v != 0x8000)
+        f.v = (~f.v) + 1;
 #else  // ARMF16 
     f.f = -(f.f);
 #endif
@@ -432,6 +537,9 @@ fann_type_ff fann_ff_neg(fann_type_ff f)
     f.u ^= 0x80000000;
 #elif defined SWF16
     f.u ^= 0x8000;
+#elif defined POSIT16
+    if (f.v != 0x8000)
+        f.v = (~f.v) + 1;
 #else  // ARMF16 
     f.f = -(f.f);
 #endif
@@ -456,6 +564,8 @@ fann_type_bp fann_bp_mac(fann_type_bp x, fann_type_bp y, fann_type_bp c)
     cf = fann_bp_to_float(c);
     cf += xf * yf;
     return fann_float_to_bp(cf);
+#elif defined POSIT16
+    return p16_mulAdd(x, y, c);
 #else  // ARMF16 
     c.f += x.f * y.f;
     return c;
@@ -480,6 +590,8 @@ fann_type_ff fann_ff_mac(fann_type_ff x, fann_type_ff y, fann_type_ff c)
     cf = fann_ff_to_float(c);
     cf += xf * yf;
     return fann_float_to_ff(cf);
+#elif defined POSIT16
+    return p16_mulAdd(x, y, c);
 #else  // ARMF16 
     c.f += x.f * y.f;
     return c;
@@ -502,6 +614,8 @@ fann_type_bp fann_bp_mul(fann_type_bp x, fann_type_bp y)
     xf = fann_bp_to_float(x);
     yf = fann_bp_to_float(y);
     return fann_float_to_bp(xf * yf);
+#elif defined POSIT16
+    return p16_mul(x, y);
 #else // ARMF16
     return x * y;
 #endif
@@ -523,6 +637,8 @@ fann_type_ff fann_ff_mul(fann_type_ff x, fann_type_ff y)
     xf = fann_ff_to_float(x);
     yf = fann_ff_to_float(y);
     return fann_float_to_ff(xf * yf);
+#elif defined POSIT16
+    return p16_mul(x, y);
 #else // ARMF16
     return x * y;
 #endif
@@ -567,6 +683,8 @@ fann_type_ff fann_ff_div(fann_type_ff x, fann_type_ff y)
     xf = fann_ff_to_float(x);
     yf = fann_ff_to_float(y);
     return fann_float_to_ff(xf / yf);
+#elif defined POSIT16
+    return p16_div(x, y);
 #else // ARMF16
     return x / y;
 #endif
@@ -588,6 +706,8 @@ fann_type_bp fann_bp_add(fann_type_bp x, fann_type_bp y)
     xf = fann_bp_to_float(x);
     yf = fann_bp_to_float(y);
     return fann_float_to_bp(xf + yf);
+#elif defined POSIT16
+    return p16_add(x, y);
 #else // ARMF16
     return x + y;
 #endif
@@ -609,6 +729,8 @@ fann_type_ff fann_ff_add(fann_type_ff x, fann_type_ff y)
     xf = fann_ff_to_float(x);
     yf = fann_ff_to_float(y);
     return fann_float_to_ff(xf + yf);
+#elif defined POSIT16
+    return p16_add(x, y);
 #else // ARMF16
     return x + y;
 #endif
@@ -630,6 +752,8 @@ fann_type_bp fann_bp_sub(fann_type_bp x, fann_type_bp y)
     xf = fann_bp_to_float(x);
     yf = fann_bp_to_float(y);
     return fann_float_to_bp(xf - yf);
+#elif defined POSIT16
+    return p16_sub(x, y);
 #else // ARMF16
     return x - y;
 #endif
@@ -651,6 +775,8 @@ fann_type_ff fann_ff_sub(fann_type_ff x, fann_type_ff y)
     xf = fann_ff_to_float(x);
     yf = fann_ff_to_float(y);
     return fann_float_to_ff(xf - yf);
+#elif defined POSIT16
+    return p16_sub(x, y);
 #else // ARMF16
     return x - y;
 #endif
@@ -668,6 +794,9 @@ fann_type_bp fann_bp_abs(fann_type_bp x)
     x.u &= 0x7FFF;
 #elif defined ARMF16 
     x.u &= 0x7FFF;
+#elif defined POSIT16
+    if (x.v > 0x8000)
+        x = fann_bp_neg(x);
 #endif
     return x;
 }
@@ -684,6 +813,9 @@ fann_type_ff fann_ff_abs(fann_type_ff x)
     x.u &= 0x7FFF;
 #elif defined ARMF16 
     x.u &= 0x7FFF;
+#elif defined POSIT16
+    if (x.v > 0x8000)
+        x = fann_bp_neg(x);
 #endif
     return x;
 }
@@ -697,6 +829,8 @@ int fann_bp_gt(fann_type_bp x, fann_type_bp y)
     return ! f32_le(x, y);
 #elif defined SWF16 
     return ! f16_le(x, y);
+#elif defined POSIT16
+    return ! p16_le(x, y);
 #else
 #error "EMUL_FLOAT"
 #endif
@@ -709,6 +843,8 @@ int fann_ff_gt(fann_type_ff x, fann_type_ff y)
     return ! f32_le(x, y);
 #elif defined SWF16 
     return ! f16_le(x, y);
+#elif defined POSIT16
+    return ! p16_le(x, y);
 #else
 #error "EMUL_FLOAT"
 #endif
@@ -721,6 +857,8 @@ int fann_bp_lt(fann_type_bp x, fann_type_bp y)
     return f32_lt(x, y);
 #elif defined SWF16 
     return f16_lt(x, y);
+#elif defined POSIT16
+    return p16_lt(x, y);
 #endif
 }
 
@@ -731,6 +869,8 @@ int fann_ff_lt(fann_type_ff x, fann_type_ff y)
     return f32_lt(x, y);
 #elif defined SWF16 
     return f16_lt(x, y);
+#elif defined POSIT16
+    return p16_lt(x, y);
 #endif
 }
 
@@ -741,6 +881,8 @@ int fann_bp_ne(fann_type_bp x, fann_type_bp y)
     return ! f32_eq(x, y);
 #elif defined SWF16 
     return ! f16_eq(x, y);
+#elif defined POSIT16
+    return ! p16_eq(x, y);
 #endif
 }
 
@@ -751,6 +893,8 @@ int fann_ff_ne(fann_type_ff x, fann_type_ff y)
     return ! f32_eq(x, y);
 #elif defined SWF16 
     return ! f16_eq(x, y);
+#elif defined POSIT16
+    return ! p16_eq(x, y);
 #endif
 }
 
@@ -763,7 +907,7 @@ fann_type_bp fann_bp_max(fann_type_bp x, fann_type_bp y)
 
 fann_type_ff fann_ff_max(fann_type_ff x, fann_type_ff y)
 {
-    if (fann_bp_gt(x,y))
+    if (fann_bp_gt(x,y)) // FIXME
         return x;
     return y;
 }
@@ -777,7 +921,7 @@ fann_type_bp fann_bp_min(fann_type_bp x, fann_type_bp y)
 
 fann_type_ff fann_ff_min(fann_type_ff x, fann_type_ff y)
 {
-    if (fann_bp_lt(x,y))
+    if (fann_bp_lt(x,y)) // FIXME
         return x;
     return y;
 }
@@ -806,6 +950,8 @@ int fann_bp_is_neg(fann_type_bp x)
     return ((x.u & 0x80000000) == 0x80000000) && ((x.u & 0x7FFFFFFF) != 0);
 #elif defined SWF16 
     return ((x.u & 0x8000) == 0x8000) && ((x.u & 0x7FFF) != 0);
+#elif defined POSIT16
+    return ((x.v & 0x8000) == 0x8000) && (x.v != 0x8000);
 #endif
 }
 
@@ -815,6 +961,8 @@ int fann_ff_is_neg(fann_type_ff x)
     return ((x.u & 0x80000000) == 0x80000000) && ((x.u & 0x7FFFFFFF) != 0);
 #elif defined SWF16 
     return ((x.u & 0x8000) == 0x8000) && ((x.u & 0x7FFF) != 0);
+#elif defined POSIT16
+    return ((x.v & 0x8000) == 0x8000) && (x.v != 0x8000);
 #endif
 }
 
@@ -824,6 +972,8 @@ int fann_bp_is_pos(fann_type_bp x)
     return ((x.u & 0x80000000) == 0) && (x.u != 0);
 #elif defined SWF16 
     return ((x.u & 0x8000) == 0) && (x.u != 0);
+#elif defined POSIT16
+    return ((x.v & 0x8000) == 0);
 #endif
 }
 
@@ -833,6 +983,8 @@ int fann_ff_is_pos(fann_type_ff x)
     return ((x.u & 0x80000000) == 0) && (x.u != 0);
 #elif defined SWF16 
     return ((x.u & 0x8000) == 0) && (x.u != 0);
+#elif defined POSIT16
+    return ((x.v & 0x8000) == 0);
 #endif
 }
 
@@ -842,6 +994,8 @@ int fann_bp_is_zero(fann_type_bp x)
     return ((x.u & 0x7FFFFFFF) == 0);
 #elif defined SWF16 
     return ((x.u & 0x7FFF) == 0);
+#elif defined POSIT16
+    return x.v == 0;
 #endif
 }
 
@@ -851,6 +1005,8 @@ int fann_ff_is_zero(fann_type_ff x)
     return ((x.u & 0x7FFFFFFF) == 0);
 #elif defined SWF16 
     return ((x.u & 0x7FFF) == 0);
+#elif defined POSIT16
+    return x.v == 0;
 #endif
 }
 

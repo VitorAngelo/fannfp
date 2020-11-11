@@ -1,3 +1,13 @@
+unsigned int fann_ff_fpu_limits(double *min_neg, double *max_neg, double *min_pos, double *max_pos);
+unsigned int fann_bp_fpu_limits(double *min_neg, double *max_neg, double *min_pos, double *max_pos);
+
+#ifdef POSIT16
+#define fann_ff_bin_set(ff, val) ((ff).v = (uint16_t)(val))
+#define fann_bp_bin_set(ff, val) ((bp).v = (uint16_t)(val))
+#elif defined SWF16
+#define fann_ff_bin_set(ff, val) ((ff).u = (uint16_t)(val))
+#define fann_bp_bin_set(ff, val) ((bp).u = (uint16_t)(val))
+#endif
 //int fann_ff_to_int(fann_type_ff f);
 float fann_ff_to_float(fann_type_ff f);
 fann_type_ff fann_ff_mac(fann_type_ff x, fann_type_ff y, fann_type_ff c);
@@ -9,7 +19,6 @@ fann_type_ff fann_int_to_ff(int i);
 fann_type_ff fann_float_to_ff(float f);
 fann_type_ff fann_ff_abs(fann_type_ff x);
 fann_type_ff fann_ff_neg(fann_type_ff x);
-fann_type_ff fann_ff_neg(fann_type_ff f);
 #ifdef EMUL_FLOAT
 fann_type_ff fann_ff_min(fann_type_ff x, fann_type_ff y);
 fann_type_ff fann_ff_max(fann_type_ff x, fann_type_ff y);
@@ -44,7 +53,7 @@ fann_type_bp fann_int_to_bp(int i);
 
 #if (defined SWF16_AP) || (defined HWF16)
 fann_type_bp fann_bp_to_bp(fann_type_bp n, int_fast8_t bp_bias);
-#elif (defined SWF16_IEEE) || (defined SWF32_IEEE)
+#elif (defined SWF16_IEEE) || (defined SWF32_IEEE) || (defined POSIT16)
 #define fann_bp_to_bp(n, b) (n)
 #else
 #error "SOFTFANN definition"
@@ -57,7 +66,6 @@ fann_type_bp fann_bp_add(fann_type_bp x, fann_type_bp y);
 fann_type_bp fann_bp_sub(fann_type_bp x, fann_type_bp y);
 fann_type_bp fann_bp_abs(fann_type_bp x);
 fann_type_bp fann_bp_neg(fann_type_bp x);
-fann_type_bp fann_bp_neg(fann_type_bp f);
 #ifdef EMUL_FLOAT
 fann_type_bp fann_bp_min(fann_type_bp x, fann_type_bp y);
 fann_type_bp fann_bp_max(fann_type_bp x, fann_type_bp y);

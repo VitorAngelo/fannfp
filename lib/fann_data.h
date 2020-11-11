@@ -366,13 +366,13 @@ struct fann_neuron
     //unsigned int prev_count;
     
     /* The steepness of the activation function */
-    fann_type_ff steepness;
+    fann_type_ff steepness; // SAVED
 
     /* The weight array */
-    fann_type_ff * weight;
+    fann_type_ff * weight; // SAVED
     
 #ifndef FANN_INFERENCE_ONLY
-    fann_type_bp train_error;
+    fann_type_bp train_error; // SAVED
 
     /* The last delta applied to a connection weight.
      * This is used for the momentum term in the backpropagation algorithm.
@@ -391,9 +391,9 @@ struct fann_neuron
     
 #if (defined SWF16_AP) || (defined HWF16)
     /* The Back. Prop. FP bias */
-    int_fast8_t bp_fp16_bias;
-    unsigned int bp_batch_overflows;
-    unsigned int bp_epoch_overflows;
+    int_fast8_t bp_fp16_bias; // SAVED
+    unsigned int bp_batch_overflows; // SAVED
+    unsigned int bp_epoch_overflows; // SAVED
 #endif
 #endif // FANN_INFERENCE_ONLY
 //#ifdef __GNUC__
@@ -406,9 +406,9 @@ struct fann_neuron
 struct fann_layer
 {
     /* The number of neurons in the layer */
-    unsigned int num_neurons;
+    unsigned int num_neurons; // SAVED
     /* num_neurons + 1, for the BIAS (to avoid dozens of +1s) */
-    unsigned int num_connections;
+    unsigned int num_connections; // SAVED (except first_layer)
  
     /* Used to choose the activation function */
     enum fann_activationfunc_enum activation;
@@ -477,10 +477,10 @@ struct fann
     unsigned int data_batch;
 
     /* the learning rate of the network */
-    fann_type_ff learning_rate;
+    fann_type_ff learning_rate; // SAVED
 
     /* The learning momentum used for backpropagation algorithm. */
-    fann_type_ff learning_momentum;
+    fann_type_ff learning_momentum; // SAVED
     /* Non-zero nomentum is used as a fall-back mechanism for other methods */
 
 #endif // FANN_INFERENCE_ONLY
@@ -488,12 +488,12 @@ struct fann
     /* pointer to the first layer (input layer) in an array af all the layers,
      * including the input and outputlayers 
      */
-    struct fann_layer *first_layer;
+    struct fann_layer *first_layer; // SAVED (count only)
 
     /* pointer to the layer past the last layer in an array af all the layers,
      * including the input and outputlayers 
      */
-    struct fann_layer *last_layer;
+    struct fann_layer *last_layer; // SAVED (count only)
 
     /* Number of input neurons (not including bias) */
     unsigned int num_input;
@@ -507,10 +507,10 @@ struct fann
 
     /* Training algorithm used when calling fann_train_on_..
      */
-    enum fann_train_enum training_algorithm;
+    enum fann_train_enum training_algorithm; // SAVED
 
     /* if changed to non-zero, update weights more frequently in batch modes */
-    unsigned int mini_batch;
+    unsigned int mini_batch; // SAVED
 #endif // FANN_INFERENCE_ONLY
 
 #ifdef CALCULATE_LOSS
@@ -536,7 +536,7 @@ struct fann
      * This difference is multiplied by two when dealing with symmetric activation functions,
      * so that symmetric and not symmetric activation functions can use the same limit.
      */
-    float bit_fail_limit;
+    float bit_fail_limit; // SAVED
 #endif // CALCULATE_ERROR
 
 #ifndef FANN_INFERENCE_ONLY
@@ -548,7 +548,7 @@ struct fann
     
     /* The stop function used during training. (default FANN_STOPFUNC_loss)
     */
-    enum fann_stopfunc_enum train_stop_function;
+    enum fann_stopfunc_enum train_stop_function; // SAVED
 
     /* The callback function used during training. (default NULL)
     */
@@ -561,7 +561,7 @@ struct fann
     /* Variable for use with RMSProp training */
     
     /* Running average memory and change factor (1 - rmsprop_avg) */
-    fann_type_ff rmsprop_avg;
+    fann_type_ff rmsprop_avg; // SAVED
     fann_type_ff rmsprop_1mavg;
     
     /* Variables for use with Quickprop training */
@@ -575,19 +575,19 @@ struct fann
     /* Variables for use with with RPROP training */
 
     /* Tells how much the stepsize should increase during learning */
-    fann_type_ff rprop_increase_factor;
+    fann_type_ff rprop_increase_factor; // SAVED
 
     /* Tells how much the stepsize should decrease during learning */
-    fann_type_ff rprop_decrease_factor;
+    fann_type_ff rprop_decrease_factor; // SAVED
 
     /* The minimum stepsize */
-    fann_type_ff rprop_delta_min;
+    fann_type_ff rprop_delta_min; // SAVED
 
     /* The maximum stepsize */
-    fann_type_ff rprop_delta_max;
+    fann_type_ff rprop_delta_max; // SAVED
 
     /* The initial stepsize */
-    fann_type_ff rprop_delta_zero;
+    fann_type_ff rprop_delta_zero; // SAVED
         
     /* Defines how much the weights are constrained to smaller values at the beginning */
     //fann_type_ff sarprop_weight_decay_shift;
@@ -607,36 +607,36 @@ struct fann
 
 #ifdef FANN_DATA_SCALE
     /* Arithmetic mean used to remove steady component in input data.  */
-    fann_type_nt *scale_mean_in;
+    fann_type_nt *scale_mean_in; // SAVED
 
     /* Standard deviation used to normalize input data (mostly to [-1;1]). */
-    fann_type_nt *scale_deviation_in;
+    fann_type_nt *scale_deviation_in; // SAVED
 
     /* User-defined new minimum for input data.
      * Resulting data values may be less than user-defined minimum. 
      */
-    fann_type_nt *scale_new_min_in;
+    fann_type_nt *scale_new_min_in; // SAVED
 
     /* Used to scale data to user-defined new maximum for input data.
      * Resulting data values may be greater than user-defined maximum. 
      */
-    fann_type_nt *scale_factor_in;
+    fann_type_nt *scale_factor_in; // SAVED
     
     /* Arithmetic mean used to remove steady component in output data.  */
-    fann_type_nt *scale_mean_out;
+    fann_type_nt *scale_mean_out; // SAVED
 
     /* Standard deviation used to normalize output data (mostly to [-1;1]). */
-    fann_type_nt *scale_deviation_out;
+    fann_type_nt *scale_deviation_out; // SAVED
 
     /* User-defined new minimum for output data.
      * Resulting data values may be less than user-defined minimum. 
      */
-    fann_type_nt *scale_new_min_out;
+    fann_type_nt *scale_new_min_out; // SAVED
 
     /* Used to scale data to user-defined new maximum for output data.
      * Resulting data values may be greater than user-defined maximum. 
      */
-    fann_type_nt *scale_factor_out;
+    fann_type_nt *scale_factor_out; // SAVED
 #endif // FANN_DATA_SCALE
 
 #ifndef FANN_INFERENCE_ONLY

@@ -68,6 +68,18 @@
 
 #elif defined SOFTFANN
 
+#ifdef POSIT16
+
+#if 0
+#define FANN_SQRT_EMULATION
+#else
+#include <math.h>
+#define fann_bp_rsqrt(val) ({fann_type_bp ret; float e; e = fann_bp_to_float(val); e = 1.0/sqrtf(e); ret = fann_float_to_bp(e); ret;})
+#define fann_bp_b_rsqrt_a(b, a) ({fann_type_bp ret; float ea, eb; ea = fann_bp_to_float(a); eb = fann_bp_to_float(b); eb = (eb)/sqrtf((ea)); ret = fann_float_to_bp(eb); ret;})
+#define fann_rsqrt_name "1/sqrtf(.f)"
+#endif
+
+#else // ! POSIT16
 #if 1
 #define FANN_SQRT_EMULATION
 #else
@@ -75,6 +87,7 @@
 #define fann_bp_rsqrt(x) fann_float_to_bp(((float)(1.0/sqrtf(fann_bp_to_float(x)))))
 #define fann_bp_b_rsqrt_a(b, a) fann_float_to_bp((float)(fann_bp_to_float(b)/sqrtf(fann_bp_to_float(a))))
 #define fann_rsqrt_name "1/sqrtf((float)(__fp16))"
+#endif
 #endif
 
 #elif defined FIXEDFANN

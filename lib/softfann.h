@@ -39,6 +39,7 @@ extern unsigned long int fann_div_ops_count;
 //#define SWF16_IEEE
 //#define SWF16_AP
 //#define HWF16
+//#define POSIT16
 
 #ifdef SWF16_IEEE
 #include "fann_ieee_f16.h"
@@ -55,6 +56,9 @@ extern unsigned long int fann_div_ops_count;
 #define SWF16
 #define EMUL_FLOAT
 
+#elif defined POSIT16
+#include "softposit.h"
+#define EMUL_FLOAT
 #elif defined ARMF16
 #include <stdint.h>
 // use diff. types to force errors
@@ -84,7 +88,13 @@ typedef float32_t fann_type_ff;
 typedef float16_t fann_type_bp;
 #endif // FANN_INFERENCE_ONLY
 typedef float16_t fann_type_ff;
-#endif // SWF16
+#elif defined POSIT16
+
+#ifndef FANN_INFERENCE_ONLY
+typedef posit16_t fann_type_bp;
+#endif // FANN_INFERENCE_ONLY
+typedef posit16_t fann_type_ff;
+#endif // POSIT16
 
 #ifndef FANN_INFERENCE_ONLY
 //typedef float fann_type_nt;

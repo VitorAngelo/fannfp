@@ -74,7 +74,15 @@
 
 #elif defined SOFTFANN
 
+#ifdef POSIT16
+
+#include <math.h>
+#define fann_ff_exp(val) ({fann_type_ff ret; float e; e = fann_ff_to_float(val); e = expf(e); ret = fann_float_to_ff(e); ret;})
+#define fann_exp_name "expf(float(bf16))"
+
+#else // ! POSIT16
 #define FANN_EXP_EMULATION
+#endif
 
 #elif defined FIXEDFANN
 

@@ -10,6 +10,7 @@ EOBJS += embedded-fixed.o
 EOBJS += softfann-ap.o
 EOBJS += softfann-ieee.o
 EOBJS += softfann-hwf16.o
+EOBJS += softfann-posit16.o
 EOBJS += bfloat16.o
 EOBJS += floatunion.o
 
@@ -119,6 +120,14 @@ softfann-hwf16.o: softfann-hwf16.d
 
 softfann-hwf16.d: softfann.c
 	gcc -MM $(CFLAGS) -DHWF16 softfann.c | sed 's,softfann.o:,softfann-hwf16.o:,' > softfann-hwf16.d
+softfann-posit16.o: softfann-posit16.d
+	gcc -c $(CFLAGS) $(ARCH) -DPOSIT16 softfann.c -o softfann-posit16.o
+
+softfann-posit16.d: softfann.c
+	gcc -MM $(CFLAGS) -DPOSIT16 softfann.c | sed 's,softfann.o:,softfann-posit16.o:,' > softfann-posit16.d
+
+softposit.o: softposit.c
+	gcc -c $(CFLAGS) $(ARCH) softposit.c -o softposit.o 
 
 %.o: %.c
 	gcc -c $(CFLAGS) $(ARCH) $*.c -o $*.o

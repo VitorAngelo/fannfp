@@ -1,4 +1,4 @@
 *.d
 *.s
-*.o
-
+*.lst
+softfann.lst-*

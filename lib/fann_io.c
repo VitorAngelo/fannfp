@@ -31,7 +31,7 @@
 #include "fann.h"
 #include "fann_data.h"
 
-#define FANN_CONF_VERSION "FANN_FLO_2.1"
+#define FANN_CONF_VERSION "FANN_FLO_2.2"
 
 /* Create a network from a configuration file.
  */
@@ -86,7 +86,7 @@ int fann_save_internal(struct fann *ann, const char *configuration_file)
 int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configuration_file)
 {
     struct fann_layer *layer_it, *prev_layer;
-    int calculated_decimal_point = 0;
+    //int calculated_decimal_point = 0;
     struct fann_neuron *neuron_it;//, *first_neuron;
     //fann_type_bp *weights;
     //struct fann_neuron **connected_neurons;
@@ -118,7 +118,7 @@ int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configur
 #ifdef CALCULATE_ERROR
     fprintf(conf, "bit_fail_limit="IOPRINTF"\n", (IOTYPE)ann->bit_fail_limit);
 #endif // CALCULATE_ERROR
-    fprintf(conf, "layer_sizes=");
+    fprintf(conf, "layer_sizes (num_neurons, activation_func)=");
     for(layer_it = ann->first_layer; layer_it != ann->last_layer; layer_it++)
     {
         /* the number of neurons in the layers (in the last layer, there is always one too many neurons, because of an unused bias) */
@@ -127,11 +127,11 @@ int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configur
     fprintf(conf, "\n");
 
 #ifdef FANN_DATA_SCALE
-    /* 2.1 */
+    /* 2.1 ... 2.2 */
     #define SCALE_SAVE( what, where )                                        \
         fprintf( conf, #what "_" #where "=" );                                \
         for( i = 0; i < ann->num_##where##put; i++ )                        \
-            fprintf( conf, "%f ", fann_nt_to_float(ann->what##_##where[ i ]) );                \
+            fprintf( conf, IOPRINTF" ", (IOTYPE) fann_nt_to_float(ann->what##_##where[ i ]) );                \
         fprintf( conf, "\n" );
 
     {
@@ -147,17 +147,18 @@ int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configur
             SCALE_SAVE( scale_deviation,    out )
             SCALE_SAVE( scale_new_min,        out )
             SCALE_SAVE( scale_factor,        out )
-        }
-        else
+        } else {
             fprintf(conf, "scale_included=0\n");
+        }
     }
 #undef SCALE_SAVE
 #endif // FANN_DATA_SCALE
 
     /* 2.0 */
-    fprintf(conf, "neurons (num_inputs, activation_steepness)=\n");
+    fprintf(conf, "neurons (num_inputs, steepness, fp16_bias, train_error, batch_overflows, epoch_overflows)=\n");
     prev_layer = NULL;
     for(layer_it = ann->first_layer + 1; layer_it != ann->last_layer; layer_it++) {
+        int bp_fp16_bias, bp_batch_overflows, bp_epoch_overflows;
         unsigned int num_con;
         if (prev_layer == NULL)
             num_con = 0;
@@ -167,12 +168,27 @@ int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configur
         /* the neurons */
         for (n = 0; n < layer_it->num_neurons; n++) {
             neuron_it = layer_it->neuron + n;
-            fprintf(conf, IOPRINTF "\n",
-                    (IOTYPE) fann_ff_to_float(neuron_it->steepness));
+            fann_set_ff_bias();
+#if (defined SWF16_AP) || (defined HWF16)
+            bp_fp16_bias = neuron_it->bp_fp16_bias;
+            bp_batch_overflows = neuron_it->bp_batch_overflows;
+            bp_epoch_overflows = neuron_it->bp_epoch_overflows;
+#else
+            bp_fp16_bias = 15;
+            bp_batch_overflows = 0;
+            bp_epoch_overflows = 0;
+#endif
+            fprintf(conf, IOPRINTF " %d ",
+                    (IOTYPE) fann_ff_to_float(neuron_it->steepness),
+                    bp_fp16_bias);
+            fann_set_bp_bias(bp_fp16_bias);
+            fprintf(conf, IOPRINTF " %u %u\n",
+                    (IOTYPE) fann_bp_to_float(neuron_it->train_error),
+                    bp_batch_overflows, bp_epoch_overflows);
         }
         prev_layer = layer_it;
     }
-    fprintf(conf, "connections (layer, connected_to_neuron, weight)=\n");
+    fprintf(conf, "connections (layer, connected_to_neuron, weight, weight_slopes, prev_steps, prev_slopes)=\n");
     prev_layer = ann->first_layer;
     for (layer_it = prev_layer + 1; layer_it != ann->last_layer; layer_it++) {
         unsigned int num_con;
@@ -182,14 +198,30 @@ int fann_save_internal_fd(struct fann *ann, FILE * conf)//, const char *configur
             neuron_it = layer_it->neuron + n;
             for (w = 0; w < num_con; w++) {
                 /* save the connection "(source weight) " */
-                fprintf(conf, "%u, %u, " IOPRINTF "\n", n, w,
+                fann_set_ff_bias();
+                fprintf(conf, "%u, %u, " IOPRINTF ", ", n, w,
                         (IOTYPE) fann_ff_to_float(neuron_it->weight[w]));
+                fann_set_bp_bias(neuron_it->bp_fp16_bias);
+                if (neuron_it->weight_slopes == NULL)
+                    fprintf(conf, "NIL, ");
+                else
+                    fprintf(conf, IOPRINTF ", ", fann_bp_to_float(neuron_it->weight_slopes[w]));
+                if (neuron_it->prev_steps == NULL)
+                    fprintf(conf, "NIL, ");
+                else
+                    fprintf(conf, IOPRINTF ", ", fann_bp_to_float(neuron_it->prev_steps[w]));
+                if (neuron_it->prev_slopes == NULL)
+                    fprintf(conf, "NIL");
+                else
+                    fprintf(conf, IOPRINTF, fann_bp_to_float(neuron_it->prev_slopes[w]));
+                fprintf(conf, "\n");
             }
         }
         prev_layer = layer_it;
     }
     fprintf(conf, "\n");
-    return calculated_decimal_point;
+    //return calculated_decimal_point;
+    return 0;
 }
 #endif // FANN_INFERENCE_ONLY
 
@@ -337,7 +369,7 @@ struct fann *fann_create_from_fd(FILE * conf, const char *configuration_file)
     printf("input\n");
 #endif
 
-    fann_skip("layer_sizes=");
+    fann_skip("layer_sizes (num_neurons, activation_func)=");
     /* determine how many neurons there should be in each layer */
     for(layer_it = ann->first_layer; layer_it != ann->last_layer; layer_it++)
     {
@@ -395,7 +427,7 @@ struct fann *fann_create_from_fd(FILE * conf, const char *configuration_file)
         return NULL;
     }
 
-    fann_skip("neurons (num_inputs, activation_steepness)=\n");
+    fann_skip("neurons (num_inputs, steepness, fp16_bias, train_error, batch_overflows, epoch_overflows)=\n"); // FIXME v2.2
     prev_layer = NULL;
     for(layer_it = ann->first_layer + 1; layer_it != ann->last_layer; layer_it++) {
         /* the neurons */
@@ -424,7 +456,7 @@ struct fann *fann_create_from_fd(FILE * conf, const char *configuration_file)
         prev_layer = layer_it;
     }
 
-    fann_skip("connections (layer, connected_to_neuron, weight)=\n");
+    fann_skip("connections (layer, connected_to_neuron, weight, weight_slopes, prev_steps, prev_slopes)=\n"); // FIXME: v2.2
     prev_layer = ann->first_layer;
     for (layer_it = prev_layer + 1; layer_it != ann->last_layer; layer_it++) {
         unsigned int w, tmpl, num_con;
