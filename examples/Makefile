@@ -1,12 +1,10 @@
-BINS = testdouble printweights
-BINS += momentums mushroom robot steepness_train stepwise
+BINS = momentums mushroom robot steepness_train stepwise
 BINS += scaling_test_double scaling_train simple_test simple_train
 BINS += add_train and_train xor_train xor_test_float
 #BINS += f16_fann
 #BINS += testfixed scaling_test_fixed xor_test_fixed
 
 XBINS = double_fann float_fann soft-ap_fann soft-ieee_fann soft-hwf16_fann soft-posit16_fann floatunion_fann bfloat16_fann
-XBINS += unit_test_posit16 unit_test_soft-ap unit_test_soft-ieee
 
 ABINS = floatfp16_fann fp16fp16_fann
 
@@ -40,10 +38,10 @@ dpi: CFLAGS += $(DFLAGS)
 dpi: $(ABINS) $(BINS)
 
 sha1.x86: $(XBINS)
-	sha1sum $(XBINS) *.sh cristiano/*.sh > sha1.x86
+	sha1sum $(XBINS) > sha1.x86
 
 sha1.pi: $(ABINS) $(XBINS)
-	sha1sum $(ABINS) $(XBINS) *.sh cristiano/*.sh > sha1.pi
+	sha1sum $(ABINS) $(XBINS) > sha1.pi
 
 CFLAGS = -Wall -pipe -I ../lib
 #CFLAGS += -Wmissing-prototypes -Wstrict-prototypes -Werror-implicit-function-declaration -Wundef -Wunused-parameter
@@ -72,9 +70,6 @@ floatunion_fann: argopts.c ../lib/floatunion.o
 bfloat16_fann: argopts.c ../lib/bfloat16.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_FLOAT -D_BFLOAT16 ../lib/bfloat16.o -o $@ argopts.c -lm -lpthread -static
 	$(STRIP) bfloat16_fann
-unit_test_bfloat16: unit_test.c ../lib/bfloat16.o
-	gcc $(CFLAGS) $(ARCH) -DFANN_FLOAT -D_BFLOAT16 ../lib/bfloat16.o -o $@ unit_test.c -lm -lpthread -static
-	$(STRIP) unit_test_bfloat16
 
 f16_fann: argopts.c ../lib/f16fann.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_FLOAT ../lib/f16fann.o -D_GCC_ARM_F16 -mfp16-format=ieee -o $@ argopts.c -lm -lpthread
@@ -83,16 +78,10 @@ f16_fann: argopts.c ../lib/f16fann.o
 soft-ap_fann: argopts.c ../lib/softfann-ap.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DSWF16_AP ../lib/softfann-ap.o -o $@ argopts.c -lm -lpthread -static
 	$(STRIP) soft-ap_fann
-unit_test_soft-ap: unit_test.c ../lib/softfann-ap.o
-	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DSWF16_AP ../lib/softfann-ap.o -o $@ unit_test.c -lm -lpthread -static
-	$(STRIP) unit_test_soft-ap
 
 soft-ieee_fann: argopts.c ../lib/softfann-ieee.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DSWF16_IEEE ../lib/softfann-ieee.o -o $@ argopts.c -lm -lpthread -static
 	$(STRIP) soft-ieee_fann
-unit_test_soft-ieee: unit_test.c ../lib/softfann-ieee.o
-	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DSWF16_IEEE ../lib/softfann-ieee.o -o $@ unit_test.c -lm -lpthread -static
-	$(STRIP) unit_test_soft-ieee
 
 soft-hwf16_fann: argopts.c ../lib/softfann-hwf16.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DHWF16 ../lib/softfann-hwf16.o -o $@ argopts.c -lm -lpthread -static
@@ -101,13 +90,6 @@ soft-posit16_fann: argopts.c ../lib/softfann-posit16.o
 	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DPOSIT16 ../lib/softfann-posit16.o -o $@ argopts.c -lm -lpthread -static
 	$(STRIP) soft-posit16_fann
 
-unit_test_posit16: unit_test.c ../lib/softfann-posit16.o
-	gcc $(CFLAGS) $(ARCH) -DFANN_SOFT -DPOSIT16 ../lib/softfann-posit16.o -o $@ unit_test.c -lm -lpthread -static
-	$(STRIP) unit_test_posit16
-
-#	gcc -DFANN_SOFT -Wall -g -I ../lib ../lib/softfann.o ../lib/fann_ap_f16.o -o $@ argopts.c -lm
-#	gcc -DFANN_SOFT -Wall -g -I ../lib ../lib/softfann.o -o $@ argopts.c -lm
-
 COMPILE_DOUBLE = gcc $(CFLAGS) $(ARCH) -DFANN_DOUBLE ../lib/doublefann.o -o $@ $@.c -lm -lpthread
 
 BUILD_FLOAT = gcc $(CFLAGS) $(ARCH) -DFANN_EMBEDDED -DFANN_FLOAT
@@ -115,14 +97,6 @@ BUILD_FLOAT = gcc $(CFLAGS) $(ARCH) -DFANN_EMBEDDED -DFANN_FLOAT
 COMPILE_FLOAT = $(BUILD_FLOAT) ../lib/x86-embedded.o -o $@ $@.c -lm -lpthread
 
 COMPILE_FIXED = gcc $(CFLAGS) $(ARCH) -DFANN_FIXED ../lib/fixedfann.o -o $@ $@.c -lm -lpthread
-testfixed: test.c ../lib/fixedfann.o
-	$(COMPILE_FIXED)
-
-testdouble: test.c ../lib/doublefann.o
-	$(COMPILE_DOUBLE)
-
-printweights: printweights.c ../lib/doublefann.o
-	$(COMPILE_DOUBLE)
 
 stepwise: stepwise.c ../lib/doublefann.o
 	$(COMPILE_DOUBLE)

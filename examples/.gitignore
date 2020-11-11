@@ -1,3 +1,4 @@
+*.o
 sha1.*
 and_fixed.data
 and_fixed.net
